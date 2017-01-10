@@ -1,4 +1,22 @@
 \documentclass{article}  % Comment this line out
+
+\usepackage[authoryear]{natbib}
+\setcitestyle{authoryear}
+\bibliographystyle{plainnat}
+
+
+%\usepackage[autostyle]{csquotes}
+%\usepackage[
+%    backend=biber,
+%    style=authoryear-icomp,
+%    sortlocale=de_DE,
+%    natbib=true,
+%    url=false, 
+%    doi=true,
+%    eprint=false,
+%    maxbibnames=50
+%]{biblatex}
+%\addbibresource{main.bib}
                                                           % if you need a4paper
 %\documentclass[a4paper, 10pt, conference]{ieeeconf}      % Use this line for a4
                                                           % paper
@@ -86,7 +104,7 @@
 
 
 \title{\LARGE \bf
-Toward negotiable reinforcement learning: Shifting priorities in Pareto optimal sequential decision-making
+Toward negotiable reinforcement learning: shifting priorities in Pareto optimal sequential decision-making
 %Pareto optimal \\ sequential decision-making
 %Pareto optimal \\ sequential decision-making
 }
@@ -121,7 +139,7 @@ Toward negotiable reinforcement learning: Shifting priorities in Pareto optimal 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
-Consider two players with different beliefs and utility functions who may cooperate to build 	a machine that takes actions on their behalf.  A representation is needed for how much the machine's policy will prioritize each player's interests over time.  Assuming the players have reached common knowledge of the situation, this paper derives a recursion that any Pareto optimal policy (one that cannot be improved for one player without sacrifice from the other) must satisfy.  Two qualitative observations can be made from the recursion: the machine must (1) use each player's own beliefs in evaluating how well an action will serve that player's utility function, and (2) shift the relative priority it assigns to each player's expected utilities over time, by a factor proportional to how well that player's beliefs predict the machine's inputs.  Observation (2) represents a substantial divergence from na\"{i}ve linear utility aggregation (as in Harsanyi's utilitarian theorem), which is shown here to be inadequate for Pareto optimal sequential decision-making on behalf of players with different beliefs.
+Existing multi-objective reinforcement learning (MORL) algorithms do not account for objectives that arise from players with differing beliefs.  Concretely, consider two players with different beliefs and utility functions who may cooperate to build a machine that takes actions on their behalf.  A representation is needed for how much the machine's policy will prioritize each player's interests over time.  Assuming the players have reached common knowledge of their situation, this paper derives a recursion that any Pareto optimal policy must satisfy.  Two qualitative observations can be made from the recursion: the machine must (1) use each player's own beliefs in evaluating how well an action will serve that player's utility function, and (2) shift the relative priority it assigns to each player's expected utilities over time, by a factor proportional to how well that player's beliefs predict the machine's inputs.  Observation (2) represents a substantial divergence from na\"{i}ve linear utility aggregation (as in Harsanyi's utilitarian theorem, and existing MORL algorithms), which is shown here to be inadequate for Pareto optimal sequential decision-making on behalf of players with different beliefs.
 \end{abstract}
 
 
@@ -129,41 +147,51 @@ Consider two players with different beliefs and utility functions who may cooper
 
 \section{Introduction}
 
-It has been argued that the first AI systems with generally super-human cognitive abilities will play an especially pivotal decision-making role in directing the future of civilization \cite{Bo14}.  If that is the case, an important question will arise: \emph{Whose values will the first super-human AI systems serve?}  Since safety is a crucial consideration in developing such systems, assuming the institutions building them come to understand those risks and the time investments needed to address them \cite{Ba16}, they will have a large incentive to cooperate in their design rather than racing under time-pressure to build competing systems.
+It has been argued that the first AI systems with generally super-human cognitive abilities will play a pivotal decision-making role in directing the future of civilization \citep{bostrom2014superintelligence}.  If that is the case, an important question will arise: \emph{Whose values will the first super-human AI systems serve?}  Since safety is a crucial consideration in developing such systems, assuming the institutions building them come to understand the risks and the time investments needed to address them \citep{baum2016promotion}, they will have a large incentive to cooperate in their design rather than racing under time-pressure to build competing systems \citep{armstrong2016racing}.
 
-Consider two nations---allies or adversaries---who must decide whether to cooperate in the deployment of an extremely powerful AI system.  Implicitly or explicitly, the resulting system would have to strike compromises when conflicts arise between the wishes of those nations.  How can they specify the degree to which that system would be governed by the distinctly held principles of each nation?  More mundanely, suppose a couple purchases a domestic robot.  How should the robot strike compromises when conflicts arise between the commands of its owners?
+Therefore, consider two nations---allies or adversaries---who must decide whether to cooperate in the deployment of an extremely powerful AI system.  Implicitly or explicitly, the resulting system would have to strike compromises when conflicts arise between the wishes of those nations.  How can they specify the degree to which that system would be governed by the distinctly held principles of each nation?  More mundanely, suppose a couple purchases a domestic robot.  How should the robot strike compromises when conflicts arise between the commands of its owners?
 
-It is already an interesting and difficult problem to robustly align an AI system's values with those of a single \emph{single} human (or a group of humans in close agreement).  Inverse reinforcement learning (IRL) \cite{Ru98} \cite{NR00} \cite {AN04} and cooperative inverse reinforcement learning (CIRL) \cite{HDAR16} represent successively realistic early approaches to this problem.  But supposing some adequate solution eventually exists for aligning the values of a machine intelligence with a single human decision-making unit, how should the values of a system serving \emph{multiple} decision-makers be ``aligned''?
+It is already an interesting and difficult problem to robustly align an AI system's values with those of a single \emph{single} human (or a group of humans in close agreement).  Inverse reinforcement learning (IRL) \citep{russell1998learning} \citep{ng2000algorithms} \citep{abbeel2004apprenticeship} and cooperative inverse reinforcement learning (CIRL) \citep{hadfield2016cooperative} represent successively realistic early approaches to this problem.  But supposing some adequate solution eventually exists for aligning the values of a machine intelligence with a single human decision-making unit, how should the values of a system serving \emph{multiple} decision-makers be ``aligned''?
 
-One might hope to specify some extremely compelling ethical principle that everyone would find so convincing as to immediately accept it.  Realistically, however, disagreements will always exist.  Consider the general case of two parties---perhaps states, companies, or individuals---who might cooperatively build or purchase an AI system to serve them both.\footnote{The results of this paper all generalize directly from $2$ to $n$ players, but for concreteness of exposition, the two player case is prioritized.}   If the parties cannot reach sufficient agreement as to what policy the AI should follow, cooperation may be less attractive than obtaining separate AI systems, one for each party.  At the individual level, non-cooperation could mean domestic disputes between domestic robots.  At the state level, it could mean an arms race between nations competing under time pressure to develop ever more powerful militarized AI systems, affording each nation less time to ensure the safety and validity of their respective systems.
+One might hope to specify some extremely compelling ethical principle that everyone would immediately accept.  Realistically, however, disagreements will always exist.  Consider the general case of two parties---perhaps states, companies, or individuals---who might cooperatively build or purchase an AI system to serve them both.\footnote{The results of this paper all generalize directly from $2$ to $n$ players, but for concreteness of exposition, the two-player case is prioritized.}   If the parties cannot reach sufficient agreement as to what policy the AI should follow, cooperation may be less attractive than obtaining separate AI systems, one for each party.  At the individual level, non-cooperation could mean domestic disputes between domestic robots.  At the state level, it could mean an arms race between nations competing under time pressure to develop ever more powerful militarized AI systems, affording each nation less time to ensure the safety and validity of their respective systems.
 
 Unless the prospect of cooperative AI ownership is made sufficiently attractive to the separate parties, the question of whose values the cooperatively owned system ``ought'' to serve is moot:  the parties will fall back on non-cooperative strategies---perhaps obtaining separate machines that will compete with each other---and the jointly owned system will not exist in the first place.   In addition, if the process of bargaining over the policy of a cooperatively owned system is difficult or complicated, the players are more likely to end negotiations and default to non-cooperative strategies. 
 
-Conversely, if bargaining is made easier, players are more likely to reach cooperation.  The purpose of this paper is to begin formalizing the problem of negotiating over the policy of a machine intelligence, and to exhibit some early findings as to the nature of Pareto optimal policies (those which cannot be improved for one player without sacrifice by another), with the eventual aim of making cooperative outcomes easier to formulate, more attractive, and more likely to obtain.
+Conversely, if bargaining is made easier, players are more likely to reach cooperation.  The purpose of this paper is to begin formalizing the problem of negotiating over the policy of a machine intelligence, and to exhibit some early findings as to the nature of \emph{Pareto optimal policies}---policies which cannot be improved for one player without sacrifice by another---with the eventual aim of making cooperative outcomes easier to formulate, more attractive, and more likely to obtain.
 
 \paragraph{Outline.} The paper is organized as follows.  Section 2 briefly outlines some standard choices of notation.  Section 3 formalizes the problem of obtaining a Pareto optimal policy for two distinct parties with common knowledge of distinct priors, derives a recursion that any such policy must follow, and contrasts that recursion with a more na\"{i}ve ``just add up a linear combination of the utility functions" approach.  The recursion implies two main qualitative insights about how a Pareto optimal policy, pursuant to a common-knowledge difference in opinion, must behave over time: (1) such a policy must (explicitly or implicitly) use each player's own beliefs in evaluating how well an action will serve that player's utility function, and (2) it must shift the relative priority it places on each player's expected utilities over time, by a factor proportional to how well that player's beliefs predict the machine's inputs.  Section 4 provides some further interpretation of these implications, in terms of bet-settling and moral realism.  Section 5 outlines subsequent work expected to be useful for enabling cooperative AI deployment in the future.  Finally, Section 6 provides concluding remarks targeted at readers who have finished the full paper.
 
 \subsection{Related work}
 
-The whole of social choice theory and voting theory may be viewed as an attempt to specify an agreeable formal policy to enact on behalf of a group.  Harsanyi's utility aggregation theorem \cite{Har55} suggests one form of solution: maximizing a linear combination of group members' utility functions.  The present work shows that this solution is inappropriate when players have different beliefs, and \thm{main} may be viewed as an extension of Harsanyi's form that accounts simultaneously for differing priors and for the sequential nature of decision-making with multiple future observations.  Indeed, Harsanyi's form follows as a direct corollary of \thm{main} when players do share the same beliefs (\cor{harsanyi}).
+\paragraph{Social choice theory.} The whole of social choice theory and voting theory may be viewed as an attempt to specify an agreeable formal policy to enact on behalf of a group.  Harsanyi's utility aggregation theorem \citep{harsanyi1980cardinal} suggests one form of solution: maximizing a linear combination of group members' utility functions.  The present work shows that this solution is inappropriate when players have different beliefs, and \thm{main} may be viewed as an extension of Harsanyi's form that accounts simultaneously for differing priors and the prospect of future observations.  Indeed, Harsanyi's form follows as a direct corollary of \thm{main} when players do share the same beliefs (\cor{harsanyi}).
 
-The formal theory of bargaining, as pioneered by Nash \cite{Na50} and carried on by authors such as Myerson \cite{My79} \cite{My91} and Satterthwaite \cite{MS83}, is also extremely topical.  Future investigation in this area might be aimed at generalizing their work to sequential decision-making settings.
+\paragraph{Bargaining theory.} The formal theory of bargaining, as pioneered by Nash \citep{nash1950bargaining} and carried on by authors such as Myerson \citep{myerson1979incentive} \citep{myerson2013game} and Satterthwaite \citep{myerson1983efficient}, is also extremely topical.  Future investigation in this area might be aimed at generalizing their work to sequential decision-making settings, and this author recommends a focus on research specifically targeted at resolving conflicts.
+
+\paragraph{Multi-agent systems.} There is ample literature examining multi-agent systems using sequential decision-making models.  \citet{shoham2008multiagent} survey various models of multiplayer games using an MDP to model each agent's objectives.  Chapter 9 of the same text surveys social choice theory, but does not account for sequential decision-making.  
+
+\citet{zhang2014fairness} may be considered a sequential decision-making approach to social choice: they use MDPs to represent the decisions of players in a competitive game, and exhibit an algorithm for the players that, if followed, arrives at a Pareto optimal Nash equilibrium satisfying a certain fairness criterion.  Among the literature surveyed here, that paper is the closest to the present work in terms of its intended application: roughly speaking, achieving mutually desirable outcomes via sequential decision-making.  However, that work is concerned with an ongoing interaction between the players, rather than selecting a policy for a single agent to follow as in this paper.  
+
+%The theory of Dec-POMPDs considers systems of sequential decision-making agents but in that setting, optimality is been characterized by a fixed, agreed-upon model of the environment \citep{oliehoek2008optimal}, and a shared objective.
+
+\paragraph{Multi-objective sequential decision-making.} There is also a good deal of work on Multi-Objective Optimization (MOO)  \citep{tzeng2011multiple}, including for sequential decision-making, where solution methods have been called Multi-Objective Reinforcement Learning (MORL).  For instance, \citet{gabor1998multi} introduce a MORL method called Pareto Q-learning for learning a set of a Pareto optimal polices for a Multi-Objective MDP (MOMDP).  \citet{soh2011evolving} define Multi-Reward Partially Observable Markov Decision Processes (MR-POMDPs), and use use genetic algorithms to produce non-dominated sets of policies for them.  \citet{roijers2015point} refer to the same problems as Multi-objective POMDPS (MOPOMDPs), and provide a bounded approximation method for the optimal solution set for all possible weightings of the objectives.  \citet{wang2014multi} surveys MORL methods, and contributes Multi-Objective Monte-Carlo Tree Search (MOMCTS) for discovering multiple Pareto optimal solutions to a multi-objective optimization problem.   \citet{wray2015multi} introduce Lexicographic Partially Observable Markov Decision Process (LPOMDPs), along with two accompanying solution methods.
+
+However, none of these or related works address scenarios where the objectives are derived from players with differing beliefs, from which the priority-shifting phenomenon of \thm{main} arises.  Differing beliefs are likely to play a key role in negotiations, so for that purpose, the formulation of multi-objective decision-making adopted here is preferable.
 
 \section{Notation}
-The reader is invited to skip this section and refer back as needed; an effort has been made to use notation that is intuitive and fairly standard, following Pearl \cite{Pe09}, Hutter \cite{Hu03}, and Orseau \cite{OR12}.
+The reader is invited to skip this section and refer back as needed; an effort has been made to use notation that is intuitive and fairly standard, following \citet{pearl2009causality}, \citet{hutter2003gentle}, and \citet{orseau2012space}.
 
 Random variables are denoted by uppercase letters, e.g., $S_1$, and lowercase letters, e.g., $s_1$, are used as indices ranging over the values of a variable, as in the equation
 \[
 \EE[S_1] = \sum_{s_1} \PP(s_1)\cdot s_1.
 \]
 
-Sequences are denoted by overbars, e.g., in the context of a sequence $(s_1,\ldots,s_n)$, $\seq s$ stands for the whole sequence.   Subsequences are denoted
+Sequences are denoted by overbars, e.g., given a sequence $(s_1,\ldots,s_n)$, $\seq s$ stands for the whole sequence.   Subsequences are denoted
 by subscripted inequalities, so e.g., $s_{<4}$ stands for $(s_1,s_2,s_3)$,
 and $s_{\le 4}$ stands for $(s_1,s_2,s_3,s_4)$.
 
 \section{Two agents building a third}
 
-Consider, informally, a scenario wherein two players --- perhaps individuals, companies, or states --- are considering cooperating to build or otherwise obtain a machine that will then interact with an environment on their behalf.\footnote{The results here all generalize from two players to $n$ players, but for clarity of exposition, the two person case is prioritized.} In such a scenario, the players will tend to bargain for ``how much'' the machine will prioritize their separate interests, so to begin, we need some way to quantify ``how much'' each player is prioritized.
+Consider, informally, a scenario wherein two players --- perhaps individuals, companies, or states --- are considering cooperating to build or otherwise obtain a machine that will then interact with an environment on their behalf.\footnote{The results here all generalize from two players to $n$ players being combined successively in any order, but for clarity of exposition, the two person case is prioritized.} In such a scenario, the players will tend to bargain for ``how much'' the machine will prioritize their separate interests, so to begin, we need some way to quantify ``how much'' each player is prioritized.
 
 %\bred{Not ready to handle BATNAS yet in sequential decisions}
 %Rational players would not choose to cooperate in such a scenario unless it could bring them more expected utility than acting unilaterally.  Thus, if the players have somewhat different objectives, some bargaining will be necessary for them to ensure the jointly owned machine acts in a way that is sufficiently favorable to each of them.  For example, if player 1 believes she could probably build a machine almost as cheaply on her own that would easily out-compete any efforts by player 2 to control the environment, then player $1$ will not be easily enticed to cooperate.  In this case, player 1 would argue that because of her high BATNA (best alternative to negotiated agreement), in order for cooperation to make sense, the cooperatively built machine would have to prioritize her highly in its actions.
@@ -171,13 +199,13 @@ For instance, one might model the machine as maximizing the expected value, give
 \begin{equation}\label{eqn:harsanyi}
 w^1U^1 + w^2U^2
 \end{equation}
-of the players' individual utility functions $U^1$ and $U^2$, as Harsanyi's social aggregation theorem \cite{Har55} recommends.  Then the bargaining process could focus on choosing the values of the weights $w^i$.  
+of the players' individual utility functions $U^1$ and $U^2$, as Harsanyi's social aggregation theorem \citep{harsanyi1980cardinal} recommends.  Then the bargaining process could focus on choosing the values of the weights $w^i$.  
 
 However, this turns out to be a bad idea.  As we shall see in \prop{impossibility}, this solution form is not generally compatible with Pareto optimality when agents have different beliefs.  Harsanyi's setting does not account for agents having different priors, nor for decisions being made sequentially, after future observations.  In such a setting, we need a new form of solution, exhibited here along with a recursion that characterizes optimal solutions by a process analogous to, but meaningfully different from, Bayesian updating.
 
 \subsection{A POMDP formulation}
 
-Let us formalize the machine's decision-making situation using the structure of a Partially Observable Markov Decision Process (POMDP), as depicted by the Bayesian network in \fig{pomdp}.  (See \cite{RN03} for an introduction to POMDPs, and \cite{Da09} for an introduction to Bayesian networks.)
+Let us formalize the machine's decision-making situation using the structure of a Partially Observable Markov Decision Process (POMDP), as depicted by the Bayesian network in \fig{pomdp}.  (See \citet{russell2003artificial} for an introduction to POMDPs, and \citet{darwiche2009modeling} for an introduction to Bayesian networks.)
 
 At each point in time $i$, the machine will have a policy $\pi_i$ that for each possible sequence of observations $o_{\le i}$ and past actions $a_{<i}$, returns a distribution $\pi_i(- \mid \hist i)$ on actions $a_i$, which will then be used to generate an action $a_i$ with probability $\pi(a_i \mid \hist i)$.  In \fig{pomdp}, the part of the Bayes net governed by the machine's policy is highlighted in green.
 
@@ -227,20 +255,22 @@ At each point in time $i$, the machine will have a policy $\pi_i$ that for each 
 \label{fig:pomdp}
 \end{figure*}
 
-\paragraph{Common knowledge assumptions.}  It is assumed that the players will have common knowledge of the policy $\pi = (\pi_1,\ldots,\pi_n)$ they select for the machine to implement, but that the players may have different beliefs about how the environment works, and of course different utility functions.  It is also assumed that the players have common knowledge of one another's posterior.\footnote{This assumption is critical; future work should design solutions for facilitating the process of attaining common knowledge, or to obviate the need to assume it.}
+\paragraph{Common knowledge assumptions.}  It is assumed that the players will have common knowledge of the policy $\pi = (\pi_1,\ldots,\pi_n)$ they select for the machine to implement, but that the players may have different beliefs about how the environment works, and of course different utility functions.  It is also assumed that the players have common knowledge of one another's posterior.  
 
-We encode each player $j$'s outlook as a POMDP, $D^j = (\Ss,\Aa,T^j, U^j, \Oo, \Omega^j, n)$, which simultaneously represents that player's beliefs about the environment, and the player's utility function.  As usual,
+\emph{This assumption is critical.}  During a bargaining process, one should expect players' beliefs to update in response to one another's behavior.   Assuming common knowledge of posteriors means that the players have reached an equilibrium where, each knowing what the other believes, does not wish to further update her own beliefs.\footnote{It is enough to assume the players have reached a ``persistent disagreement'' that cannot be mediated by the machine in some way.  Future work should design solutions for facilitating the process of attaining common knowledge, or to obviate the need to assume it.}
+
+We encode each player $j$'s outlook as a POMDP, $D^j = (\Ss^j,\Aa,T^j, U^j, \Oo, \Omega^j, n)$, which simultaneously represents that player's beliefs about the environment, and the player's utility function.
 \begin{itemize}
-\item $\Ss$ represents the set of possible states $s$ of the environment,
+\item $\Ss^j$ represents a set of possible states $s$ of the environment,
 \item $\Aa$ represents the set of possible actions $a$ available to the machine,
 \item $T^j$ represents the conditional probabilities player $j$ believes will govern the environment state transitions, i.e., $\PP^j(s_{i+1}\mid s_i a_i)$,
-\item $U^j$ represents player $j$'s utility function from sequences of environmental states $(s_1,\ldots,s_n)$ to $\RR$,
+\item $U^j$ represents player $j$'s utility function from sequences of environmental states $(s_1,\ldots,s_n)$ to $\RR$; for the sake of generality, $U^j$ is \emph{not assumed} to be additive over time, as reward functions often are, 
 \item $\Oo$ represents the set of possible observations $o$ of the machine, 
 \item $\Omega^j$ represents the conditional probabilities player $j$ believes will govern the machine's observations, i.e., $\PP^j(o_i\mid s_i)$, and
 \item $n$ is the number of time steps.
 \end{itemize}
 %
-Thus, player $j$'s subjective probability of an outcome $(\seq s, \seq o, \seq a)$ is given by a probability distribution $\PP^j$ that takes $\pi$ as a parameter:
+Thus, player $j$'s subjective probability of an outcome $(\seq s, \seq o, \seq a)$, for any $\seq s \in (\Ss^j)^n$, is given by a probability distribution $\PP^j$ that takes $\pi$ as a parameter:
 \begin{equation}\label{eqn:pomdp}
 \PP^j(\seq s, \seq o, \seq a ; \pi) := \PP^j(s_1) \cdot \prod_{i=1}^{n} 
 \PP^j(o_i \mid s_i)\, \pi(a_i \mid \hist i)\, \PP^j(s_{i+1} \mid s_ia_i)
@@ -248,14 +278,14 @@ Thus, player $j$'s subjective probability of an outcome $(\seq s, \seq o, \seq a
 
 As such, the POMDPs $D^1$ and $D^2$ are ``compatible'' in the following sense:
 
-\begin{definition}[Compatible POMDPs]  We say that two POMDPs, $D^1$ and $D^2$, are \emph{compatible} if any policy for one may be viewed as a policy for the other, i.e., they have the same sets of states  $\Ss$, actions $\Aa$, and observations $\Oo$, and the same number of time steps $n$. 
+\begin{definition}[Compatible POMDPs]  We say that two POMDPs, $D^1$ and $D^2$, are \emph{compatible} if any policy for one may be viewed as a policy for the other, i.e., they have the same set of actions $\Aa$ and observations $\Oo$, and the same number of time steps $n$.
 \end{definition}
 
 \subsection{Pareto optimal policies}
 
 In this context, where a policy $\pi$ may be evaluated relative to more than one POMDP, we use superscripts to represent which POMDP is governing the probabilities and expectations, e.g.,
 \[
-\EE^j[U^j; \pi] := \sum_{\seq s} \PP^j(\bar s; \pi) U^j(\bar s)
+\EE^j[U^j; \pi] := \sum_{\seq s \in (\Ss^j)^n} \PP^j(\bar s; \pi) U^j(\bar s)
 \]
 represents the expectation in $D^j$ of the utility function $U^j$, assuming policy $\pi$ is followed.
 \begin{definition}[Pareto optimal policies]  A policy $\pi$ is \emph{Pareto optimal} for a compatible pair of POMDPs $(D^1,D^2)$ if for any other policy $\pi'$, either
@@ -301,24 +331,25 @@ We shall soon see that any Pareto optimal policy $\pi$ must favor, as time progr
 For any weights, $w^1,w^2\ge 0$ with $w^1+w^2=1$, we define a new POMDP that works by flipping a $(w^1,w^2)$-weighted coin, and then running $D^1$ or $D^2$ thereafter, according to the coin flip.  Explicitly, 
 
 \begin{definition}[POMDP mixtures]\label{defn:mixture} Let $D^1$ and $D^2$ be compatible POMDPs, with parameters 
-$D^j = (\Ss,\Aa,T^j, U^j, \Oo, \Omega^j, n)$.  Define a new POMDP, denoted $D=w^1D^1 + w^2D^2$, with parameters 
-$D^j = (\Ss',\Aa,T, U, \Oo, \Omega, n)$, as follows:
+$D^j = (\Ss^j,\Aa,T^j, U^j, \Oo, \Omega^j, n)$.  Define a new POMDP compatible both, denoted $D=w^1D^1 + w^2D^2$, with parameters 
+$D^j = (\Ss,\Aa,T, U, \Oo, \Omega, n)$, as follows:
 \begin{itemize}
-\item $\Ss':=\{1,2\}\times\Ss$; elements of $\Ss'$ are denoted by pairs $(j,s)$.
+\item $\Ss:= \{(j,s) \mid j\in\{1,2\}, s\in\Ss^j\}$,
 \item The environmental transition probabilities $T$ are given by
 \begin{align*}
 \PP\left((j,s_1)\right) :=&\: w^j\cdot \PP^j(s_1)\\
+\intertext{for any initial state $s_1\in\Ss^j$, and thereafter,}
 \PP\left((j',s_{i+1}) \mid (j,s_i), a_i \right) :=&\;
 \begin{cases}
 \PP^j\left(s_{i+1} \mid s_ia_i\right) &\mbox{ if $j'=j$}\\
 0 & \mbox { if $j'\neq j$}
 \end{cases}
 \end{align*}
-Hence, the value of $j$ will be constant over time, so a full history for the environment may be represented by a pair 
+Hence, the value of $j$ will be constant over time, so a full history for the environment may be represented by a pair
 \[
-(j,\seq s)\in\{1,2\}\times\Ss^n
+(j,\seq s) \in \{1\}\times (\Ss^1)^n \cup \{2\}\times(\Ss^2)^n.
 \]
-Let $\bool $ denote the random variable that equals whichever constant value of $j$ obtains, so then
+Let $\bool $ denote the boolean random variable that equals whichever constant value of $j$ obtains, so then
 \[
 \PP(\bool =j) = w^j
 \]
@@ -330,6 +361,7 @@ U(j,\seq s) := U^j(\seq s)
 \[
 \PP\left(o_i \mid (j,s_i)\right) := \PP(\bool =j) \cdot \PP^j(o_i \mid s_i)
 \]
+In particular, the policy does not observe directly whether $j=1$ or $j=2$.
 \end{itemize}
 
 \end{definition}
@@ -387,10 +419,10 @@ The POMDP mixture $D=w^1D^1 + w^2D^2$ can be depicted with a Bayes net by adding
 = &\; w^1\EE^2(U^1; \pi) + w^2\EE^2(U^2 ; \pi)
 \end{align*}
 %
-Therefore, using the above definitions, \lem{pareto} can be restated in the following equivalent form:
+Therefore, using the above definitions, \lem{pareto} may be restated in the following equivalent form:
 
 \begin{lemma}\label{lem:mixture}
-Given a compatible pair of POMDPs, $(D^1,D^2)$, a policy $\pi$ is Pareto optimal for that pair if and only if there exist weights $w^j$ such that $\pi$ is an optimal policy for the single POMDP $w^1D^1+w^2D^2$.  
+Given a pair $(D^1,D^2)$ of compatible POMDPs, a policy $\pi$ is Pareto optimal for that pair if and only if there exist weights $w^j$ such that $\pi$ is an optimal policy for the single POMDP given by $w^1D^1+w^2D^2$.  
 \end{lemma}
 
 \subsection{A recursive Pareto optimality condition}
@@ -398,10 +430,10 @@ Given a compatible pair of POMDPs, $(D^1,D^2)$, a policy $\pi$ is Pareto optimal
 Expressed in the form of \eqn{pareto}, it might not be clear how a Pareto optimal policy makes use of its observations over time, aside from storing them in memory.  For example, is there any sense in which the machine carries ``beliefs" about the environment that it ``updates" at each time step?  \lem{mixture} allows us to answer this and related questions by translating theorems about single POMDPs into theorems about compatible pairs of POMDPs.  
 
 If $\pi$ is an optimal policy for a single POMDP, at any time step $i$, optimality of the action distribution $\pi_i(-\mid\hist{i})$ can be characterized without reference to the previous policy components 
-$(\pi_1,\ldots,\pi_{i-1})$, nor to $\pi_i(-\mid\althist{i})$ for any alternate history $\althist{i}$.\footnote{This fact can used to justify why the ``sunk cost'' fallacy is indeed a fallacy.}   To express this claim in an equation, Pearl's ``$do()$" notation \cite{Pe09} comes in handy:
+$(\pi_1,\ldots,\pi_{i-1})$, nor to $\pi_i(-\mid\althist{i})$ for any alternate history $\althist{i}$.\footnote{This fact can used to justify why the ``sunk cost'' fallacy is indeed a fallacy.}   To express this claim in an equation, Pearl's ``$do()$" notation \citep{pearl2009causality} comes in handy:
 \begin{definition}[``do'' notation]
 \[
-\PP^j(\seq o \mid do(\seq a)) := \sum_{\seq s} \PP^j(s_1) \cdot \prod_{i=1}^n
+\PP^j(\seq o \mid do(\seq a)) := \sum_{\seq s \in (\Ss^j)^n} \PP^j(s_1) \cdot \prod_{i=1}^n
 \PP^j(o_i \mid s_i)\, \PP^j(s_{i+1} \mid s_ia_i)
 \]
 \end{definition}
@@ -409,7 +441,7 @@ $(\pi_1,\ldots,\pi_{i-1})$, nor to $\pi_i(-\mid\althist{i})$ for any alternate h
 This expression is the same as the probability of $(\seq o, \seq a)$ when $\pi$ is the constant policy that places probability $1$ on the action sequence $\seq a$.
 
 \begin{proposition}[Classical separability]\label{prop:separability}
-If $\pi$ is optimal for a POMDP $D$, described by conditional probabilities $\PP(-\mid -)$ and utility function $U$ (as in \eqn{pomdp}), then for each time step $i$ and each observation/action history $\hist{i}$, the action distribution $\pi_i(-\mid \hist{n})$ satisfies the following backward recursion:
+If $D$ is a POMDP described by conditional probabilities $\PP(-\mid -)$ and utility function $U$ (as in \eqn{pomdp}), then a policy $\pi$ is optimal for $D$ if and only if for each time step $i$ and each observation/action history $\hist{i}$, the action distribution $\pi_i(-\mid \hist{n})$ satisfies the following backward recursion:
 \begin{align*}
 & \pi_i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(()\right)}\right.\\
 & \left.\quad \PP(\dohist{i})\cdot \EE[U \mid \hist{i} ;\; a_n\sim \alpha; \; \pi_{i+1},\ldots,\pi_{n}]\right)
@@ -422,10 +454,10 @@ $\pi_i(\althist{i})$ for any alternate history $\althist{i}$.
 This is a standard property of POMDP solutions.
 \end{proof}
 
-Pareto optimality can similarly be characterized by backward recursion from the final time step.  The resulting recursion reveals a pattern in how the weights on the players' conditionally expected utilities change over time, which is the main result of this paper:
+It turns out that Pareto optimality can be characterized in a similar way by backward recursion from the final time step.  The resulting recursion reveals a pattern in how the weights on the players' conditionally expected utilities must change over time, which is the main result of this paper:
 
 \begin{theorem}[Pareto optimal policy recursion]\label{thm:main}
-Given a compatible pair of POMDPs $(D^1,D^2)$ of length $n$, a policy $\pi$ is Pareto optimal if and only if its components $\pi_i$ for $i\le n$ satisfy the following backward recursion for some pair of weights $w^1,w^2\geq 0$ with $w^1+w^2=1$:
+Given a pair $(D^1,D^2)$ of compatible POMDPs of length $n$, a policy $\pi$ is Pareto optimal if and only if its components $\pi_i$ for $i\le n$ satisfy the following backward recursion for some pair of weights $w^1,w^2\geq 0$ with $w^1+w^2=1$:
 \begin{align*}
 &\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(\left(\right)\right)}\right.\\
 & \left.w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
@@ -434,13 +466,13 @@ Given a compatible pair of POMDPs $(D^1,D^2)$ of length $n$, a policy $\pi$ is P
 In words, to achieve Pareto optimality, the machine must
 \begin{enumerate}
 \item use each player's own beliefs when estimating the degree to which a decision favors that player's utility function, and
-\item shift the relative priorities of the players' expected utilities in the machine's decision criteria over time, by a factor proportional to how well the players predict the machine's inputs.
+\item shift the relative priorities of the players' expected utilities in the machine's decision objective over time, by a factor proportional to how well the players predict the machine's inputs.
 \end{enumerate}
 \end{theorem}
 
 \begin{proof}
 By \lem{mixture}, the Pareto optimality of $\pi$ for $(D^1,D^2)$ is equivalent to its classical optimality for
-$w^1D^1 + w^2D^2$, which by \prop{separability} is equivalent to satisfying the following backward recursion (writing $\PP$ and $\EE$ for probabilities and expectations in $w^1D^1 + w^2D^2$):
+$w^1D^1 + w^2D^2$ for some $(w^1,w^2)$, which by \prop{separability} is equivalent to satisfying the following backward recursion (writing $\PP$ and $\EE$ for probabilities and expectations in $w^1D^1 + w^2D^2$):
 \begin{align*}
 &\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(\left(\right)\right)}\right.\\
 & \left.\PP(\bool =1)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE[U \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
@@ -457,8 +489,7 @@ hence the result.
 When the players have the same beliefs, they aways assign the same probability to the machine's inputs, so the weights on their respective expectations do not change over time.  In this case, Harsanyi's utility aggregation formula is recovered as a special instance:
 
 \begin{corollary}[Harsanyi's utility aggregation formula]\label{cor:harsanyi}
-Suppose that players 1 and 2 share the same beliefs about the environment, i.e., the pair of compatible POMDPs $D^1$ and $D^2$ agree on all parameters except the utility functions $U^1\neq U^2$. Then a policy $\pi$ is Pareto optimal if and only if there exist weights $w^1,w^2\geq 0$ with $w^1+w^2=1$ such that for $i\le n$, $\pi_i$ satisfies
-
+Suppose that players 1 and 2 share the same beliefs about the environment, i.e., the pair $(D^1,D^2)$ of compatible POMDPs agree on all parameters except the players' utility functions $U^1\neq U^2$. Then a policy $\pi$ is Pareto optimal if and only if there exist weights $w^1,w^2\geq 0$ with $w^1+w^2=1$ such that for $i\le n$, $\pi_i$ satisfies
 \[
 \pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\EE[w^1U^1+w^2U^2] \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right)
 \]
@@ -550,7 +581,7 @@ for some $q(o_1)\in[0,1]$ depending on $o_1$.  Here, $\EE^1[U^1 ; \pi] \le 20 < 
 \]
 Here, $\EE^1[U^1 ; \pi] = \EE^2[U^2 ; \pi] = 20 < 27$, so $\pi$ is strictly worse than $\hat\pi$ in expectation to both Alice and Bob.
 \end{enumerate}
-The remaining cases, $r=2/3$ and  $r>2/3$, are symmetric to the first two, with Bob in place of Alice and (none, all) in place of (all, none).  This completes the proof.
+The remaining cases, $r=2/3$ and  $r>2/3$, are symmetric to the first two, with Bob in place of Alice and (none, all) in place of (all, none).
 \end{proof}
 
 \section{Interpretations}
@@ -571,20 +602,20 @@ Mixing ``is'' and ``ought'' in this way is often considered a type error.  Nonet
 
 \section{Current limitations and future directions}
 
-The eventual aim of this work is to facilitate the cooperative development and deployment of advanced AI systems, by simplifying the process of bargaining for shared control of such systems, and by making collaborative outcomes generally easier to implement and more attractive.  For this purpose, while Pareto optimality is a desirable condition to aim for, but is not an adequate solution concept on its own.  Indeed, the solution ``maximize player 1's utility function, without regard for player 2'' counts as Pareto optimal, yet is clearly not the sort of solution one would expect two nations to agree upon.  This and at least several other issues must be addressed to build a satisfactory negotiation framework, exhibited below in order of increasing difficulty as estimated by the author.
+The eventual aim of this work is to facilitate the cooperative development and deployment of advanced AI systems, by simplifying the process of bargaining for shared control of such systems, and by making collaborative outcomes generally easier to implement and more attractive.  For this purpose, while Pareto optimality is a desirable condition to aim for, it is not an adequate solution concept on its own.  Indeed, the policy ``maximize player 1's utility function, without regard for player 2'' is Pareto optimal, yet is clearly not the sort of solution one would expect two nations to agree upon.  This and at least several other issues must be addressed to build a satisfactory negotiation framework, exhibited below in order of increasing difficulty as estimated by the author.
 
-\paragraph{1. BATNA dominance.}  In any bargaining situation, each player has a ``best alternative to negotiated agreement'', or BATNA, that she expects to obtain if the other player chooses not to cooperate.  The characterization of Pareto optimality given in \thm{main} {\em does not} account for the players' BATNAs.  Given a facet of the Pareto boundary, specified by the maximization of a linear function with weights $(w^1,w^2)$, a policy $\pi$ satisfying \thm{main} will yield an expectation pair $\epair$ lying on that facet.  Thus, the bargaining problem has been reduced to choosing an appropriate facet of the Pareto boundary.  But suppose not all points on the chosen facet lie above both players' BATNAs.  Then, in order to satisfy the individual rationality of the players, the policy {\em should} target a more specific subset of that facet.  At present, this author knows no precise method for achieving this in sequential decision-making, other than by brute-force searching for a policy with this property.
+\paragraph{1. BATNA dominance.}  In any bargaining situation, each player has a ``best alternative to negotiated agreement'', or BATNA, that she expects to obtain if the other player chooses not to cooperate.  The characterization of Pareto optimality given in \thm{main} {\em does not} account for the players' BATNAs.  Given a facet of the Pareto boundary, specified by the maximization of a linear function with weights $(w^1,w^2)$, a policy $\pi$ satisfying \thm{main} will yield an expectation pair $\epair$ lying on that facet.  Thus, the bargaining problem has been reduced to choosing an appropriate facet of the Pareto boundary.  But suppose not all points on the chosen facet lie above both players' BATNAs.  Then, in order to satisfy the individual rationality of the players, the policy {\em should} target a more specific subset of that facet.
 
-\paragraph{2. Targeting specific expectation pairs.}  If a specific target value for the expectation pair $\epair$ is desired, unless that pair is a vertex of the Pareto region (e.g., perhaps the boundary is curved), the best that \thm{main} can ensure is a point on the same facet.  The ability to target a specific pair would solve not only BATNA dominance (1), but also help achieve other fairness or robustness criteria that might arise from bargaining.  One approach would be to make a small modification to the players' utility functions to ensure that the resulting Pareto boundary is curved, thereby avoiding this problem at the cost of a tiny utility adjustment.  Choosing a simple form for the adjustment that is amenable to formal proof would be a natural next step in this direction.
+\paragraph{2. Targeting specific expectation pairs.}  If a specific target value for the expectation pair $\epair$ is desired, unless that pair is a vertex of the Pareto region (e.g., perhaps the boundary is curved), the best that following the recursion of \thm{main} ensures is a point on the same facet.  The ability to target a specific pair would solve not only BATNA dominance (1), but also help achieve other fairness or robustness criteria that might arise from bargaining.  One approach would be to make a small modification to the players' utility functions to ensure that the resulting Pareto boundary is curved, thereby avoiding this problem at the cost of a tiny utility adjustment.  Choosing a simple form for the adjustment that is amenable to formal proof would be a natural next step in this direction.
 
-\paragraph{3. Information trade.}  Our algorithm implicitly favors whichever player best predicts the machine's input history, given its policy.  This makes sense when the players have common knowledge of each other's priors and observations, at which point they have already had the opportunity to update on each other's views and chosen not to.  This is unrealistic if Alice knows that Bob has made observations in the past that Alice did not.  In that case, Alice will view Bob's beliefs as containing valuable information that ought to shift her prior.  She may wish to bargain with Bob for access to that information in order to improve her own ability to optimize the machine's policy.  Perhaps she would concede some control over the machine (by reducing her weight, $w^1$) in exchange for information provided by Bob to improve her beliefs.  An efficient procedure to naturally facilitate this sort of exchange would be an improvement over the present algorithm.  One approach would be to have each player express their posterior as a function of the other's, and use a fixed point theorem to choose a stable pair of posteriors.  However, many questions arise about this method when there are multiple fixed points.
+\paragraph{3. Information trade.}  Our algorithm implicitly favors whichever player best predicts the machine's input history, given its action history.  This makes sense when the players have common knowledge of each other's priors and observations, at which point they have already had the opportunity to update on each other's views and chosen not to.  This is unrealistic if Alice knows that Bob has made observations in the past that Alice did not.  In that case, Alice will view Bob's beliefs as containing valuable information that ought to shift her prior.  She may wish to bargain with Bob for access to that information in order to improve her own ability to optimize the machine's policy.  Perhaps she would concede some control over the machine (by reducing her weight, $w^1$) in exchange for information provided by Bob to improve her beliefs.  An efficient procedure to naturally facilitate this sort of exchange would be complimentary \thm{main}.  One approach would be to have each player express their posterior as a function of the other's, and use a fixed point theorem to choose a stable pair of posteriors.  However, many questions arise about this method when there are multiple fixed points.
 
-\paragraph{4. Learning priors and utility functions.}  It is notoriously difficult to explicitly specify one's utility function $U$ to a machine, so in practice, one must choose a method enabling the machine to learn the utility function.  Cooperative inverse reinforcement learning (CIRL) \cite{HDAR16} exhibits such a framework, and reduces the problem to solving a POMDP.   In CIRL, a human and a robot play a cooperative game wherein both players aim to maximize the human's utility function $U$, but the robot is uncertain about $U$ and must infer it from the human.  Moreover, the human and robot have common knowledge of this situation, so the human may engage in ``teaching'' behavior to help the robot along.  Such dynamics must be accounted for in a satisfactory treatment of negotiation for a machine's priorities.  In addition, the players' priors should probably also be learned by the machine in some way rather than explicitly specified.
+\paragraph{4. Learning priors and utility functions.}  It is notoriously difficult to explicitly specify one's utility function $U$ to a machine, so in practice, one must choose a method enabling the machine to learn the utility function.  Cooperative inverse reinforcement learning (CIRL) \citep{hadfield2016cooperative} exhibits such a framework, and reduces the problem to solving a POMDP.   In CIRL, a human and a robot play a cooperative game wherein both players aim to maximize the human's utility function $U$, but the robot is uncertain about $U$ and must infer it from the human.  Moreover, the human and robot have common knowledge of this situation, so the human may engage in ``teaching'' behavior to help the robot along.  Such dynamics must be accounted for in a satisfactory treatment of negotiation for a machine's priorities.  In addition, the players' priors should probably also be learned by a machine in some way rather than explicitly specified.
 
-\paragraph{5. Incentive compatibility.}  Assuming any particular method for learning players' priors and utility functions, a question arrises as to whether it incentivizes players to represent their beliefs and utilities honestly.  For example, Alice  may have some incentive to exaggerate her estimation of her BATNA in the positive direction, to motivate Bob to ``sweeten the deal'' by conceding her a higher priority $w^1$ in the recursion of \thm{main}.  A satisfactory learning method should rule out or otherwise cope with this phenomenon.  A great deal of literature already exists on incentive compatibility, as begun by \cite{My79}, \cite{Hu72}, and \cite{MS83}, which should offer a good start.
+\paragraph{5. Incentive compatibility.}  Assuming any particular method for learning players' priors and utility functions, a question arrises as to whether it incentivizes players to represent their beliefs and utilities honestly.  For example, Alice  may have some incentive to exaggerate her estimation of her BATNA in the positive direction, to motivate Bob to ``sweeten the deal'' by conceding her a higher priority $w^1$ in the recursion of \thm{main}.  As well, players might also have incentives to alter their reported beliefs in order to exaggerate the degree to which the machine's decisions will affect their utilities.  A satisfactory learning method should rule out or otherwise cope with this phenomenon.  A great deal of literature already exists on incentive compatibility, as begun by \citet{hurwicz1972informationally}, \citet{myerson1979incentive}, and \citet{myerson1983efficient}, which should offer a good start.
 
 
-\paragraph{6. Naturalized decision theory.} The POMDP setting used here is ``Cartesian'' in that it assumes a clear divide between the machine's inner workings and its environment.  This is highly inappropriate when the machine may be copied or simulated; it may wind up in Newcomb-like problems as in \cite{SF15}, and very strange cooperative equilibria may exist between its copies, such as in \cite{Cri16}.  Instead, one should assume a ``naturalized'' model of the problem where the machine is part of its environment, as in \cite{FST15}.  Some attempts have been made to characterize optimal decision-making in a naturalized setting \cite{OR12}, but very few theorems to aid in sequential implementation exist (e.g., no analogue of \prop{separability} is known), except possibly for some self-reflective properties exhibited by Garrabrant's logical inductors \cite{GBCST16} that might be expanded to exhibit relevance to sequential decision-making.   Without a satisfactory model of naturalized decision-making for the machine to follow, the negotiating parties might unwittingly assign the machine a policy vulnerable to Newcomb-like extortions.  On the other hand, a satisfactory resolution would not only help to model the machine's situation, but also that of the players themselves during the negotiation phase.
+\paragraph{6. Naturalized decision theory.} The POMDP setting used here is ``Cartesian'' in that it assumes a clear divide between the machine's inner workings and its environment.  This is highly inappropriate when the machine may be copied or simulated; it may wind up in Newcomb-like problems as in \citet{soares2015toward}, and very strange cooperative equilibria may exist between its copies, such as in \citet{critch2016parametric}.  Instead, one should assume a ``naturalized'' model of the problem where the machine is part of its environment, as in \citet{fallenstein2015reflective}.  Some attempts have been made to characterize optimal decision-making in a naturalized setting, e.g., by  \citet{orseau2012space}, but very few theorems to aid in sequential implementation exist (e.g., no analogue of \prop{separability} is known), except possibly for some self-reflective properties exhibited by Garrabrant's logical inductors \citep{garrabrant2016logical} that might be expanded to exhibit relevance to sequential decision-making.   Without a satisfactory model of naturalized decision-making for the machine to follow, the negotiating parties might unwittingly assign the machine a policy vulnerable to Newcomb-like extortions.  On the other hand, a satisfactory resolution would not only help to model the machine's situation, but also that of the players themselves during the negotiation phase.
 
 \section{Conclusion}
 
@@ -619,60 +650,8 @@ As a final remark, consider that social choice theory and bargaining theory were
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\begin{thebibliography}{99}
-
-\bibitem{AN04} Abbeel, P and Ng, A.   ``Apprenticeship learning via inverse reinforcement learning.'' In ICML, 2004.
-
-%\bibitem{Au76} Aumann, Robert J. ``Agreeing to disagree." The Annals of Statistics (1976): 1236-1239.
-
-\bibitem{Ba16} Baum, Seth D. "On the promotion of safe and socially beneficial artificial intelligence." AI \& SOCIETY (2016): 1-9.
-
-\bibitem{Bo14}  Bostrom, N. ``Superintelligence: Paths, Dangers, Strategies." Oxford, 2014.
-
-\bibitem{Cri16}  Critch, Andrew. ``Parametric Bounded L\"{o}b's Theorem and Robust Cooperation of Bounded Agents." arXiv:1602.04184 (2016).
-
-\bibitem{Da09} Darwiche, Adnan. ``Bayesian Networks."  Chapter 4 of Modeling and reasoning with Bayesian networks. Cambridge University Press, 2009.
-
-\bibitem{GBCST16} Garrabrant, Scott, Tsvi Benson-Tilsen, Andrew Critch, Nate Soares, and Jessica Taylor. ``Logical Induction." arXiv:1609.03543 (2016).
-
-\bibitem{FST15} Fallenstein, Benja, Nate Soares, and Jessica Taylor. ``Reflective variants of Solomonoff induction and AIXI." In International Conference on Artificial General Intelligence, pp. 60-69. Springer International Publishing, 2015.
-
-\bibitem{Har55} Harsanyi, John C. ``Cardinal Welfare, Individualistic Ethics, and Interpersonal Comparisons of Utility." Journal of Political Economy 63, no. 4 (1955): 309-321.
-
-\bibitem{HDAR16} Hadfield-Menell, Dylan, Anca Dragan, Pieter Abbeel, and Stuart Russell. ``Cooperative Inverse Reinforcement Learning."  30th Conference on Neural Information Processing Systems (NIPS 2016), Barcelona, Spain.
-
-\bibitem{Hu72} Hurwicz, Leonid. "On informationally decentralized systems." Decision and organization (1972).
-
-\bibitem{Hu03} Hutter, Marcus. ``A Gentle Introduction to The Universal Algorithmic Agent \{AIXI\}." Artificial General Intelligence (2003).
-
-\bibitem{MS83} Myerson, Roger B., and Mark A. Satterthwaite. ``Efficient mechanisms for bilateral trading." Journal of 
-Economic Theory 29, no. 2 (1983): 265-281.
-
-\bibitem{My79} Myerson, Roger B. ``Incentive compatibility and the bargaining problem." Econometrica: Journal of the Econometric Society (1979): 61-73.
-
-\bibitem{My91} Myerson, Roger B. ``Game theory: analysis of con?ict." Harvard University (1991).
-
-\bibitem{Na50} Nash Jr, John F. ``The bargaining problem." Econometrica: Journal of the Econometric Society (1950): 155-162.
-
-\bibitem{NR00} Ng, A and Russell, S.  ``Algorithms for inverse reinforcement learning.'' In ICML, 2000.
-
-\bibitem{OR12} Orseau, Laurent, and Mark Ring. ``Space-Time embedded intelligence." In International Conference on Artificial General Intelligence, pp. 209-218. Springer Berlin Heidelberg, 2012.
-
-\bibitem{Pe09}  Pearl, Judea. Causality. Cambridge university press, 2009.
-
-\bibitem{RN03} Russell, Stuart Jonathan, Peter Norvig, John F. Canny, Jitendra M. Malik, and Douglas D. Edwards. ``Sequential Decision Problems."  Chapter 17.1 in Artificial intelligence: a modern approach. Vol. 2. Upper Saddle River: Prentice hall, 2003. 
-
-\bibitem{Ru98} Russell, Stuart J.  ``Learning agents for uncertain environments'' (extended abstract). In COLT, 1998.
-
-\bibitem{TYLC16} Taylor, Jessica, Eliezer Yudkowsky, Patrick LaVictoire, and Andrew Critch. Alignment for Advanced Machine Learning Systems. Technical Report 20161, MIRI, 2016.
-
-\bibitem{SF15} Soares, Nate, and Benja Fallenstein. ``Toward idealized decision theory." arXiv:1507.01986 (2015).
-
-
-
-
-
-\end{thebibliography}
+%\printbibliography 
+\bibliography{main.bib}
 
 
 
