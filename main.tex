@@ -1,45 +1,28 @@
-\documentclass{article}  % Comment this line out
+\documentclass{article}
+\usepackage{ijcai17}
 
-\usepackage[authoryear]{natbib}
-\setcitestyle{authoryear}
-\bibliographystyle{plainnat}
+% Use the postscript times font!
+\usepackage{times}
 
+% the following package is optional:
+%\usepackage{latexsym} 
 
-%\usepackage[autostyle]{csquotes}
-%\usepackage[
-%    backend=biber,
-%    style=authoryear-icomp,
-%    sortlocale=de_DE,
-%    natbib=true,
-%    url=false, 
-%    doi=true,
-%    eprint=false,
-%    maxbibnames=50
-%]{biblatex}
-%\addbibresource{main.bib}
-                                                          % if you need a4paper
-%\documentclass[a4paper, 10pt, conference]{ieeeconf}      % Use this line for a4
-                                                          % paper
+% MIRI Default Packages:
+\usepackage[citefix,noobjects,nofunctions]{miritools}
+\setcounter{secnumdepth}{1}
 
-%\IEEEoverridecommandlockouts                              % This command is only
-                                                          % needed if you want to
-                                                          % use the \thanks command
-%\overrideIEEEmargins
-% See the \addtolength command later in the file to balance the column lengths
-% on the last page of the document
-
-
-
-% The following packages can be found on http:\\www.ctan.org
+%PAPER-SPECIFIC PACKAGES:
 %\usepackage{graphics} % for pdf, bitmapped graphics files
 %\usepackage{epsfig} % for postscript graphics files
 %\usepackage{mathptmx} % assumes new font selection scheme installed
-%\usepackage{times} % assumes new font selection scheme installed
 \usepackage{amsmath} % assumes amsmath package installed
 \usepackage{amsthm} % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
+\usepackage{amsopn}
 
 \usepackage{pgfplots}
+%Comment out when submitting
+\pgfplotsset{compat=1.14}
 \usepackage{abbrevs}
 
 \usepackage{multirow}
@@ -93,48 +76,24 @@
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator{\image}{image}
 
-\newtheorem{theorem}{Theorem}
+%\newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{corollary}[theorem]{Corollary}
 
-\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{definition}[theorem]{Definition}
 \newtheorem{assumption}[theorem]{Assumption}
 \newtheorem{example}[theorem]{Example}
 
 
-\title{\LARGE \bf
-Toward negotiable reinforcement learning: shifting priorities in Pareto optimal sequential decision-making
-%Pareto optimal \\ sequential decision-making
-%Pareto optimal \\ sequential decision-making
-}
+\title{Toward negotiable reinforcement learning: shifting priorities in Pareto optimal sequential decision-making}
 
-%\author{ \parbox{3 in}{\centering Huibert Kwakernaak*
-%         \thanks{*Use the $\backslash$thanks command to put information here}\\
-%         Faculty of Electrical Engineering, Mathematics and Computer Science\\
-%         University of Twente\\
-%         7500 AE Enschede, The Netherlands\\
-%         {\tt\small h.kwakernaak@autsubmit.com}}
-%         \hspace*{ 0.5 in}
-%         \parbox{3 in}{ \centering Pradeep Misra**
-%         \thanks{**The footnote marks may be inserted manually}\\
-%        Department of Electrical Engineering \\
-%         Wright State University\\
-%         Dayton, OH 45435, USA\\
-%         {\tt\small pmisra@cs.wright.edu}}
-%}
-
-\author{Andrew Critch% <-this % stops a space
-\thanks{Machine Intelligence Research Institute}
-\thanks{UC Berkeley, Center for Human Compatible AI}%
-}
+\author{Andrew Critch\\ Machine Intelligence Research Institute \\ UC Berkeley, Center for Human Compatible AI}
 
 
 \begin{document}
 
 \maketitle
-\thispagestyle{empty}
-\pagestyle{empty}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -271,10 +230,13 @@ We encode each player $j$'s outlook as a POMDP, $D^j = (\Ss^j,\Aa,T^j, U^j, \Oo,
 \end{itemize}
 %
 Thus, player $j$'s subjective probability of an outcome $(\seq s, \seq o, \seq a)$, for any $\seq s \in (\Ss^j)^n$, is given by a probability distribution $\PP^j$ that takes $\pi$ as a parameter:
-\begin{equation}\label{eqn:pomdp}
+%\begin{equation}
+\begin{multline}
+\label{eqn:pomdp}
 \PP^j(\seq s, \seq o, \seq a ; \pi) := \PP^j(s_1) \cdot \prod_{i=1}^{n} 
-\PP^j(o_i \mid s_i)\, \pi(a_i \mid \hist i)\, \PP^j(s_{i+1} \mid s_ia_i)
-\end{equation}
+\PP^j(o_i \mid s_i)\, \\  \pi(a_i \mid \hist i)\, \PP^j(s_{i+1} \mid s_ia_i)
+\end{multline}
+%\end{equation}
 
 As such, the POMDPs $D^1$ and $D^2$ are ``compatible'' in the following sense:
 
@@ -336,15 +298,18 @@ $D^j = (\Ss,\Aa,T, U, \Oo, \Omega, n)$, as follows:
 \begin{itemize}
 \item $\Ss:= \{(j,s) \mid j\in\{1,2\}, s\in\Ss^j\}$,
 \item The environmental transition probabilities $T$ are given by
+
 \begin{align*}
-\PP\left((j,s_1)\right) :=&\: w^j\cdot \PP^j(s_1)\\
+& \PP\left((j,s_1)\right) := \: w^j\cdot \PP^j(s_1)\\
 \intertext{for any initial state $s_1\in\Ss^j$, and thereafter,}
-\PP\left((j',s_{i+1}) \mid (j,s_i), a_i \right) :=&\;
+& \PP\left((j',s_{i+1}) \mid (j,s_i), a_i \right) & \\
+& := \;
 \begin{cases}
 \PP^j\left(s_{i+1} \mid s_ia_i\right) &\mbox{ if $j'=j$}\\
 0 & \mbox { if $j'\neq j$}
 \end{cases}
 \end{align*}
+
 Hence, the value of $j$ will be constant over time, so a full history for the environment may be represented by a pair
 \[
 (j,\seq s) \in \{1\}\times (\Ss^1)^n \cup \{2\}\times(\Ss^2)^n.
@@ -414,10 +379,10 @@ In particular, the policy does not observe directly whether $j=1$ or $j=2$.
 \end{figure*}
 
 The POMDP mixture $D=w^1D^1 + w^2D^2$ can be depicted with a Bayes net by adding an additional environmental node for $\bool $ in the diagram of $D^1$ and $D^2$ (see \fig{pomdp2}).  Indeed, given any policy $\pi$, the expected payoff of $\pi$ in $w^1D^1+w^2D^2$ is exactly
-\begin{align*}
-&\; \PP(\bool =1)\cdot\EE(U \mid \bool =1 ; \pi) + \PP(\bool =2)\cdot\EE(U \mid \bool =2 ; \pi)\\
-= &\; w^1\EE^2(U^1; \pi) + w^2\EE^2(U^2 ; \pi)
-\end{align*}
+\begin{multline*}
+\; \PP(\bool =1)\cdot\EE(U \mid \bool =1 ; \pi) \\  + \PP(\bool =2)\cdot\EE(U \mid \bool =2 ; \pi)\\
+= \; w^1\EE^2(U^1; \pi) + w^2\EE^2(U^2 ; \pi)
+\end{multline*}
 %
 Therefore, using the above definitions, \lem{pareto} may be restated in the following equivalent form:
 
@@ -432,20 +397,24 @@ Expressed in the form of \eqn{pareto}, it might not be clear how a Pareto optima
 If $\pi$ is an optimal policy for a single POMDP, at any time step $i$, optimality of the action distribution $\pi_i(-\mid\hist{i})$ can be characterized without reference to the previous policy components 
 $(\pi_1,\ldots,\pi_{i-1})$, nor to $\pi_i(-\mid\althist{i})$ for any alternate history $\althist{i}$.\footnote{This fact can used to justify why the ``sunk cost'' fallacy is indeed a fallacy.}   To express this claim in an equation, Pearl's ``$do()$" notation \citep{pearl2009causality} comes in handy:
 \begin{definition}[``do'' notation]
-\[
-\PP^j(\seq o \mid do(\seq a)) := \sum_{\seq s \in (\Ss^j)^n} \PP^j(s_1) \cdot \prod_{i=1}^n
+\begin{multline*}
+\PP^j(\seq o \mid do(\seq a)) \\ := \sum_{\seq s \in (\Ss^j)^n} \PP^j(s_1) \cdot \prod_{i=1}^n
 \PP^j(o_i \mid s_i)\, \PP^j(s_{i+1} \mid s_ia_i)
-\]
+\end{multline*}
 \end{definition}
 
 This expression is the same as the probability of $(\seq o, \seq a)$ when $\pi$ is the constant policy that places probability $1$ on the action sequence $\seq a$.
 
 \begin{proposition}[Classical separability]\label{prop:separability}
 If $D$ is a POMDP described by conditional probabilities $\PP(-\mid -)$ and utility function $U$ (as in \eqn{pomdp}), then a policy $\pi$ is optimal for $D$ if and only if for each time step $i$ and each observation/action history $\hist{i}$, the action distribution $\pi_i(-\mid \hist{n})$ satisfies the following backward recursion:
-\begin{align*}
-& \pi_i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(()\right)}\right.\\
-& \left.\quad \PP(\dohist{i})\cdot \EE[U \mid \hist{i} ;\; a_n\sim \alpha; \; \pi_{i+1},\ldots,\pi_{n}]\right)
-\end{align*}
+%OLD VERSION
+%\begin{align*}
+%& \pi_i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(()\right)}\right.\\
+%& \left.\quad \PP(\dohist{i})\cdot \EE[U \mid \hist{i} ;\; a_n\sim \alpha; \; \pi_{i+1},\ldots,\pi_{n}]\right)
+%\end{align*}
+\begin{multline*}
+ \pi_i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A}\left( \PP(\dohist{i})\cdot \right. \\ \left.\EE[U \mid \hist{i} ;\; a_n\sim \alpha; \; \pi_{i+1},\ldots,\pi_{n}] \right)
+\end{multline*}
 This characterization of $\pi_i(\hist{i})$ does not refer to $\pi_1,\ldots,\pi_{i-1}$, nor to 
 $\pi_i(\althist{i})$ for any alternate history $\althist{i}$.
 \end{proposition}
@@ -458,11 +427,20 @@ It turns out that Pareto optimality can be characterized in a similar way by bac
 
 \begin{theorem}[Pareto optimal policy recursion]\label{thm:main}
 Given a pair $(D^1,D^2)$ of compatible POMDPs of length $n$, a policy $\pi$ is Pareto optimal if and only if its components $\pi_i$ for $i\le n$ satisfy the following backward recursion for some pair of weights $w^1,w^2\geq 0$ with $w^1+w^2=1$:
+%OLD VERSION
+%\begin{align*}
+%&\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(\left(\right)\right)}\right.\\
+%& \left.w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right) \cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
+%+ & \left.w^2 \PP^2\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right) \cdot \EE^2[U^2 \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n] \right)
+%\end{align*}
 \begin{align*}
-&\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(\left(\right)\right)}\right.\\
-& \left.w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
-+ & \left.w^2 \PP^2\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^2[U^2 \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n] \right)
+\pi^i&(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \biggl(\vphantom{\left(\left(\right)\right)}\biggr.\\
+ &\left.w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\right. \\ 
+ & \quad \quad \left.\cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
++ &\left.w^2 \PP^2\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\right. \\ 
+& \quad \quad \biggl.\cdot \EE^2[U^2 \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n] \biggr)
 \end{align*}
+
 In words, to achieve Pareto optimality, the machine must
 \begin{enumerate}
 \item use each player's own beliefs when estimating the degree to which a decision favors that player's utility function, and
@@ -473,15 +451,30 @@ In words, to achieve Pareto optimality, the machine must
 \begin{proof}
 By \lem{mixture}, the Pareto optimality of $\pi$ for $(D^1,D^2)$ is equivalent to its classical optimality for
 $w^1D^1 + w^2D^2$ for some $(w^1,w^2)$, which by \prop{separability} is equivalent to satisfying the following backward recursion (writing $\PP$ and $\EE$ for probabilities and expectations in $w^1D^1 + w^2D^2$):
+%OLD VERSION
+%\begin{align*}
+%&\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(\left(\right)\right)}\right.\\
+%& \left.\PP(\bool =1)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE[U \mid \hist{i} a_i ;\; a_i\sim %\alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
+%+ & \left.\PP(\bool =2)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE[U \mid \hist{i} a_i;\; a_i\sim %\alpha;\; \pi_{i+1},\ldots,\pi_n] \right).
+%\end{align*}
 \begin{align*}
-&\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\vphantom{\left(\left(\right)\right)}\right.\\
-& \left.\PP(\bool =1)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE[U \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
-+ & \left.\PP(\bool =2)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE[U \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n] \right).
+&\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \biggl(\vphantom{\left(\left(\right)\right)}\biggr.\\
+& \left.\PP(\bool =1)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\right. \\
+ & \quad \quad \left.\cdot \EE[U \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right.\\
++ & \left.\PP(\bool =2)\cdot \PP\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\right. \\
+ & \quad \quad \biggl.\cdot \EE[U \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n] \biggr).
 \end{align*}
 By \defn{mixture}, the expression inside the $\argmax$ equals 
+%OLD VERSION
+%\begin{align*}
+%& w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\\
+%+ & w^2 \PP^2\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^2[U^2 \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]
+%\end{align*}
 \begin{align*}
-& w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\\
-+ & w^2 \PP^2\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right)\cdot \EE^2[U^2 \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]
+& w^1 \PP^1\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right) \\
+& \quad \quad \cdot \EE^1[U^1 \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\\
++ & w^2 \PP^2\left(\dohist{i}; \pi_{i+1},\ldots,\pi_n\right) \\
+& \quad \quad \cdot \EE^2[U^2 \mid \hist{i} a_i;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]
 \end{align*}
 hence the result.
 \end{proof}
@@ -490,9 +483,10 @@ When the players have the same beliefs, they aways assign the same probability t
 
 \begin{corollary}[Harsanyi's utility aggregation formula]\label{cor:harsanyi}
 Suppose that players 1 and 2 share the same beliefs about the environment, i.e., the pair $(D^1,D^2)$ of compatible POMDPs agree on all parameters except the players' utility functions $U^1\neq U^2$. Then a policy $\pi$ is Pareto optimal if and only if there exist weights $w^1,w^2\geq 0$ with $w^1+w^2=1$ such that for $i\le n$, $\pi_i$ satisfies
-\[
-\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\EE[w^1U^1+w^2U^2] \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right)
-\]
+\begin{multline*}
+\pi^i(-\mid\hist{i}) \in \argmax_{\alpha\in\Delta A} \left(\EE[w^1U^1+w^2U^2]\right. \\
+\left. \mid \hist{i} a_i ;\; a_i\sim \alpha;\; \pi_{i+1},\ldots,\pi_n]\right)
+\end{multline*}
 where $\EE=\EE^1=\EE^2$ denotes the shared expectations of both players.
 \end{corollary}
 \begin{proof}
@@ -505,11 +499,9 @@ To see the necessity of the $\PP^j$ terms that shift the expectation weights in 
 
 \paragraph{A cake-splitting scenario.}  The parameters of this scenario are laid out in Table \ref{table:scenario}, and described as follows:
 
-Alice (Player 1) and Bob (Player 2) are about to be presented with a cake which they can choose to split in half to share, or give entirely to one of them.  They have (built or purchased) a robot that will make the cake-splitting decision on their behalf.  Alice's utility function returns $0$ if she gets no cake, $20$ if she gets half a cake, or $30$ if she gets a whole cake.  Bob's utility function works similarly.  
+Alice (Player 1) and Bob (Player 2) are about to be presented with a cake which they can choose to split in half to share, or give entirely to one of them.  They have (built or purchased) a robot that will make the cake-splitting decision on their behalf.  Alice's utility function returns $0$ if she gets no cake, $20$ if she gets half a cake, or $30$ if she gets a whole cake.  Bob's utility function works similarly.
 
-However, Alice and Bob have slightly different beliefs about how the environment works.  They both agree on the state of the environment that the robot will encounter at first: a room with a cake in it ($S_1=\text{``cake''}$).  But Alice and Bob have different predictions about how the robot's sensors will perceive the cake: Alice thinks that when the robot perceives the cake, it is $90\%$ likely to appear with a red tint ($O_1=\text{``red"}$), and $10\%$ likely to appear with a green tint ($O_1=\text{``green"}$), whereas Bob believes the exact opposite.  In either case, upon seeing the cake, the robot will either give Alice the entire cake ($A_1=S_1=\text{(all, none)}$), split the cake half-and-half ($A_1=S_1=\text{(half, half)}$), or give Bob the entire cake ($A_1=S_1=\text{(none, all)}$).  Moreover, Alice and Bob have common knowledge of all these facts.
-
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
 \begin{tabular}{*{7}{|c}|}
 \hline
@@ -532,7 +524,10 @@ $S_1$ & $O_1$& $\PP^1(O_1\mid S_1)$ & $\PP^2(O_1\mid S_1)$ & $A_1=S_1$ & $U^1$ &
 \end{tabular}
 \caption{An example scenario wherein a Pareto optimal policy undergoes priority shifting}
 \label{table:scenario}
-\end{table}
+\end{table*}
+
+However, Alice and Bob have slightly different beliefs about how the environment works.  They both agree on the state of the environment that the robot will encounter at first: a room with a cake in it ($S_1=\text{``cake''}$).  But Alice and Bob have different predictions about how the robot's sensors will perceive the cake: Alice thinks that when the robot perceives the cake, it is $90\%$ likely to appear with a red tint ($O_1=\text{``red"}$), and $10\%$ likely to appear with a green tint ($O_1=\text{``green"}$), whereas Bob believes the exact opposite.  In either case, upon seeing the cake, the robot will either give Alice the entire cake ($A_1=S_1=\text{(all, none)}$), split the cake half-and-half ($A_1=S_1=\text{(half, half)}$), or give Bob the entire cake ($A_1=S_1=\text{(none, all)}$).  Moreover, Alice and Bob have common knowledge of all these facts.
+%FORMER PLACEMENT OF TABLE
 
 Now, consider the following Pareto optimal policy that favors Alice (Player 1) when $O_1$ is red, and Bob (Player 2) when $O_1$ is green:
 %
@@ -552,9 +547,10 @@ In particular, $\hat\pi$ is more appealing to both Alice and Bob than an agreeme
 \begin{proposition}\label{prop:impossibility}
 The Pareto optimal strategy $\hat\pi$ above cannot be implemented by any machine that na\"{i}vely maximizes a fixed-over-time linear combination of the conditionally expected utility of the two players, i.e., by any policy $\pi$ satisfying 
 %
-\begin{equation}\label{eqn:naive}
-\pi(- \mid o_1) \in \argmax_{\alpha\in\Delta A}\left(r\cdot\EE^1[U^1 \mid o_1; a_1\sim\alpha] + (1-r)\cdot\EE^2[U^2 \mid o_1; a_1\sim\alpha]\right)
-\end{equation}
+\begin{multline}\label{eqn:naive}
+\pi(- \mid o_1) \in \argmax_{\alpha\in\Delta A}\left(r\cdot\EE^1[U^1 \mid o_1; a_1\sim\alpha] + (1-r)\right. \\ 
+\left. \cdot\EE^2[U^2 \mid o_1; a_1\sim\alpha]\right)
+\end{multline}
 %
 for some fixed $r\in[0,1]$.  Moreover, every such policy $\pi$ is strictly worse than $\hat\pi$ in expectation to one of the players.
 \end{proposition} 
@@ -650,10 +646,9 @@ As a final remark, consider that social choice theory and bargaining theory were
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%\printbibliography 
-\bibliography{main.bib}
 
-
-
+%% The file named.bst is a bibliography style file for BibTeX 0.99c
+\bibliographystyle{named}
+\bibliography{General,Inbox,MIRIPublications}
 
 \end{document}

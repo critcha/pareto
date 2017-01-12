@@ -1,0 +1,253 @@
+%% miritools.sty created by Jimmy (jimmy@intelligence.org) with custom commands by Nate Soares
+% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{miritools}[2016/02/22 v0.01]
+
+\RequirePackage{amsmath,amssymb,amsopn,amsfonts}
+\RequirePackage{mdwlist}
+\RequirePackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{positioning,intersections}
+\RequirePackage{caption,subcaption}
+\RequirePackage[ruled,vlined,noend]{algorithm2e}
+\RequirePackage{microtype}
+\RequirePackage{mathtools}
+\RequirePackage{xfrac}
+\RequirePackage{etoolbox}
+
+\newif\if@miriarticle
+\DeclareOption{miriarticle}{\@miriarticletrue}
+\DeclareOption{nomiriarcticle}{\@miriarticlefalse}
+
+\newif\if@citefix
+\DeclareOption{nocitefix}{\@citefixfalse}
+\DeclareOption{citefix}{\@citefixtrue\@natbibfalse}
+
+\newif\if@natbib
+\DeclareOption{natbib}{\@natbibtrue}
+\DeclareOption{nonatbib}{\@natbibfalse}
+
+\newif\if@mathhelp
+\DeclareOption{mathhelp}{\@mathhelptrue}
+\DeclareOption{nomathhelp}{\@mathhelpfalse}
+
+\newif\if@functions
+\DeclareOption{functions}{\@functionstrue}
+\DeclareOption{nofunctions}{\@functionsfalse}
+
+\newif\if@objects
+\DeclareOption{objects}{\@objectstrue}
+\DeclareOption{noobjects}{\@objectsfalse}
+
+\newif\if@environments
+\DeclareOption{environments}{\@environmentstrue}
+\DeclareOption{noenvironments}{\@environmentsfalse}
+
+\newif\if@refs
+\DeclareOption{refs}{\@refstrue}
+\DeclareOption{norefs}{\@refsfalse}
+
+\newif\if@alghelp
+\DeclareOption{alghelp}{\@alghelptrue}
+\DeclareOption{noalghelp}{\@alghelpfalse}
+
+\newif\if@todo
+\@todofalse
+\DeclareOption{todo}{\@todotrue}
+
+\newif\if@notodo
+\@notodofalse
+\DeclareOption{notodo}{\@notodotrue\@todofalse}
+
+\DeclareOption*{\PackageWarning{miritools}{Unknown package option `\CurrentOption'}}
+
+\ExecuteOptions{natbib,mathhelp,functions,objects,environments,refs,alghelp,todo} %All options but citefix are loaded by default
+
+\ProcessOptions\relax
+
+%%% Prevents amsthm.sty from loading with miriarticle.sty
+\if@miriarticle
+  \else
+  \RequirePackage{amsthm}
+\fi
+
+%%% Natbib facsimile commands (useful for e.g., AAAI papers):
+\if@citefix
+  \@ifundefined{citet}{%
+  \def\citet{\@ifnextchar[{\@witht}{\@withoutt}}%
+  \def\@witht[#1]#2{\citeauthor{#2}~\shortcite[#1]{#2}}%
+  \def\@withoutt#1{\citeauthor{#1}~\shortcite{#1}}%
+  }{}
+
+  \@ifundefined{citep}{%
+  \def\citep{\@ifnextchar[{\@withp}{\@withoutp}}%
+  \def\@withp[#1]#2{\cite[#1]{#2}}%
+  \def\@withoutp#1{\cite{#1}}%
+  }{}
+  \newcommand{\citeyearpar}{\shortcite{}}
+  \newcommand{\mkbibparens}[1]{(#1)}
+  \newcommand{\ch}{chap.\xspace}
+  \newcommand{\pp}{page\xspace}
+\fi
+
+
+%% Citation helpers:
+\if@natbib
+  \newcommand{\ch}{\bibstring{chapter}\xspace}
+  \newcommand{\pp}{\bibstring{page}\xspace}
+  \newcommand{\shortcite}[1]{\citeyearpar{#1}} %Makes shortcite command from AAAI style cross-compatible with miri templates
+\fi
+
+%% Math helpers:
+\if@mathhelp
+\newcommand{\Set}[1]{\ensuremath{\{\,#1\,\}}}
+\newcommand{\Any}{\ensuremath{\,\cdot\,}}
+\newcommand{\Quote}[1]{\ensuremath{\ulcorner#1\urcorner}}
+\fi
+
+
+%%% Functions:
+% NOTE: For these two, use \underset{...}.
+% \DeclareMathOperator* is bad at placing the subscript correctly.
+\if@functions
+  \newcommand{\argmax}{\operatorname{arg\,max}}
+  \newcommand{\argmin}{\operatorname{arg\,min}}
+\fi
+
+
+%%% Objects:
+\if@objects
+  \newcommand{\PA}{\ensuremath{\mathsf{PA}}\xspace}
+  \newcommand{\ZF}{\ensuremath{\mathsf{ZF}}\xspace}
+  \newcommand{\NN}{\ensuremath{\mathbb{N}}\xspace}
+  \newcommand{\RR}{\ensuremath{\mathbb{R}}\xspace}
+  \newcommand{\ZZ}{\ensuremath{\mathbb{Z}}\xspace}
+  \newcommand{\QQ}{\ensuremath{\mathbb{Q}}\xspace}
+  \newcommand{\PP}{\ensuremath{\mathbb{P}}\xspace}
+  \newcommand{\EE}{\ensuremath{\mathbb{E}}\xspace}
+\fi
+
+
+%%% Environments:
+\if@environments
+  \newtheorem{theorem}{Theorem}
+  \newtheorem{lemma}{Lemma}
+  \newtheorem{definition}{Definition}
+  \newtheorem{problem}{Problem}
+\fi
+
+
+%%% References:
+\if@refs
+  \newcommand{\Alg}[1]{Algorithm~\ref{alg:#1}}
+  \newcommand{\Def}[1]{Definition~\ref{def:#1}}
+  \newcommand{\Fig}[1]{Figure~\ref{fig:#1}}
+  \newcommand{\Lem}[1]{Lemma~\ref{lem:#1}}
+  \newcommand{\Prob}[1]{Problem~\ref{prob:#1}}
+  \newcommand{\Sec}[1]{Section~\ref{sec:#1}}
+  \newcommand{\Tab}[1]{Table~\ref{tab:#1}}
+  \newcommand{\Thm}[1]{Theorem~\ref{thm:#1}}
+  \newcommand{\App}[1]{Appendix~\ref{app:#1}}
+% NOTE: Equation is the only non-capitalized shortcut provided.
+% Also, \eq{x} outputs the equation number alone.
+  \newcommand{\Eqn}[1]{equation~\eqref{eq:#1}}
+  \newcommand{\eq}[1]{\eqref{eq:#1}}
+\fi
+
+%% Algorithm helpers:
+\if@alghelp
+  \DontPrintSemicolon
+  \SetKwProg{Fn}{def}{\-:}{end}
+  \SetKwIF{If}{ElseIf}{Else}{if}{\!:}{elif}{else:}{end}
+  \SetKwFor{For}{for}{\!:}{end}
+  \SetKwFor{Loop}{loop}{\!:}{end}
+  \SetKwFunction{Output}{output}
+\fi
+
+%%% Todo Notes:
+\if@todo
+  \RequirePackage[colorinlistoftodos,textsize=small]{todonotes}
+\fi
+
+\if@notodo
+  \RequirePackage[disable,colorinlistoftodos,textsize=small]{todonotes}
+\fi
+
+
+
+\endinput
+
+%%
+%% End of file `miritools.sty'.
+
+%%%Old contents of preamble
+%%You can copy and paste any parts necessary for styles that can't use the entire miritools package.
+
+% Standard packages
+%\usepackage{amsmath,amssymb,amsthm,amsopn,amsfonts}
+%\usepackage{mdwlist}
+%\usepackage{tikz}
+%\usetikzlibrary{shapes,arrows}
+%\usetikzlibrary{positioning,intersections}
+%\usepackage{caption,subcaption}
+%\usepackage[colorinlistoftodos,textsize=small]{todonotes}
+%\usepackage[ruled,vlined,noend]{algorithm2e}
+%\usepackage{microtype}
+%\usepackage{mathtools}
+%\usepackage{xfrac}
+%\usepackage{etoolbox}
+
+% Section and TOC numbering
+%\setcounter{secnumdepth}{2}
+%\setcounter{tocdepth}{2}
+
+% Custom commands:
+%% Citation helpers:
+%\newcommand{\ch}{\bibstring{chapter}\xspace}
+%\newcommand{\pp}{\bibstring{page}\xspace}
+%\newcommand{\shortcite}[1]{\citeyearpar{#1}}
+%% Math helpers:
+%%% Syntax:
+%\newcommand{\Set}[1]{\ensuremath{\{\,#1\,\}}}
+%\newcommand{\Any}{\ensuremath{\,\cdot\,}}
+%\newcommand{\Quote}[1]{\ensuremath{\ulcorner#1\urcorner}}
+%%% Functions:
+% NOTE: For these two, use \underset{...}.
+% \DeclareMathOperator* is bad at placing the subscript correctly.
+%\newcommand{\argmax}{\operatorname{arg\,max}}
+%\newcommand{\argmin}{\operatorname{arg\,min}}
+%%% Objects:
+%\newcommand{\PA}{\ensuremath{\mathsf{PA}}\xspace}
+%\newcommand{\ZF}{\ensuremath{\mathsf{ZF}}\xspace}
+%\newcommand{\NN}{\ensuremath{\mathbb{N}}\xspace}
+%\newcommand{\RR}{\ensuremath{\mathbb{R}}\xspace}
+%\newcommand{\ZZ}{\ensuremath{\mathbb{Z}}\xspace}
+%\newcommand{\QQ}{\ensuremath{\mathbb{Q}}\xspace}
+%\newcommand{\PP}{\ensuremath{\mathbb{P}}\xspace}
+%\newcommand{\EE}{\ensuremath{\mathbb{E}}\xspace}
+%%% Environments:
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{definition}{Definition}
+%\newtheorem{problem}{Problem}
+%%% References:
+%\newcommand{\Alg}[1]{Algorithm~\ref{alg:#1}}
+%\newcommand{\Def}[1]{Definition~\ref{def:#1}}
+%\newcommand{\Fig}[1]{Figure~\ref{fig:#1}}
+%\newcommand{\Lem}[1]{Lemma~\ref{lem:#1}}
+%\newcommand{\Prob}[1]{Problem~\ref{prob:#1}}
+%\newcommand{\Sec}[1]{Section~\ref{sec:#1}}
+%\newcommand{\Tab}[1]{Table~\ref{tab:#1}}
+%\newcommand{\Thm}[1]{Theorem~\ref{thm:#1}}
+%\newcommand{\App}[1]{Appendix~\ref{app:#1}}
+% NOTE: Equation is the only non-capitalized shortcut provided.
+% Also, \eq{x} outputs the equation number alone.
+%\newcommand{\Eqn}[1]{equation~\eqref{eq:#1}}
+%\newcommand{\eq}[1]{\eqref{eq:#1}}
+%% Algorithm helpers:
+%\DontPrintSemicolon
+%\SetKwProg{Fn}{def}{\-:}{end}
+%\SetKwIF{If}{ElseIf}{Else}{if}{\!:}{elif}{else:}{end}
+%\SetKwFor{For}{for}{\!:}{end}
+%\SetKwFor{Loop}{loop}{\!:}{end}
+%\SetKwFunction{Output}{output}
